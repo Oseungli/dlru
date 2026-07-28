@@ -1,0 +1,10 @@
+{
+  "name": "allam-ai-alarm",
+  "version": "1.0.0",
+  "description": "ALLAM - AI Alarm & Community Platform",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve ."
+  },
+  "dependencies": {}
+}
