@@ -11,8 +11,5 @@ const firebaseConfig = {
   measurementId: "G-QTVQRG44S3"
 };
 
-// 파이어베이스 초기화
 const app = initializeApp(firebaseConfig);
-
-// 파이어스토어 데이터베이스 내보내기 (서비스 계정 키 불필요)
 export const db = getFirestore(app);
