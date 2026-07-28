@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from './firebase'; // firebase.js 경로 확인
+import { db } from './lib/firebase'; // firebase.js 경로 확인
 import { collection, addDoc, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
 
 export default function App() {
