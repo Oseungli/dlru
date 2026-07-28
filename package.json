@@ -1,15 +1,20 @@
 {
   "name": "allam-ai-alarm",
+  "private": true,
   "version": "1.0.0",
-  "description": "ALLAM - AI Alarm & Community Platform",
-  "main": "index.html",
+  "type": "module",
   "scripts": {
-    "start": "serve .",
-    "build": "echo 'No build step required'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "firebase": "^10.12.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.2.0"
   }
 }
