@@ -1,169 +1,77 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db } from './lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import AuthModal from './components/AuthModal';
+import { db } from './firebase'; // firebase.js 경로 확인
+import { collection, addDoc, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [userData, setUserData] = useState({ nickname: '모닝러', gold: 0, exp: 0 });
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('home');
+  const [opinions, setOpinions] = useState([]);
+  const [inputText, setInputText] = useState('');
 
-  // Firebase 로그인 상태 및 사용자 데이터 감시
+  // ② 앱을 열면 Firestore에 저장된 글을 최신순으로 불러오기
+  const fetchOpinions = async () => {
+    try {
+      const q = query(collection(db, "opinions"), orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      const list = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setOpinions(list);
+    } catch (error) {
+      console.error("데이터를 불러오는 중 오류가 발생했습니다: ", error);
+    }
+  };
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        // Firestore에서 사용자 프로필 정보 가져오기
-        try {
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-          if (userDoc.exists()) {
-            setUserData(userDoc.data());
-          }
-        } catch (error) {
-          console.error("프로필 정보 로드 실패:", error);
-        }
-      } else {
-        setUserData({ nickname: '모닝러', gold: 0, exp: 0 });
-      }
-    });
-
-    return () => unsubscribe();
+    fetchOpinions();
   }, []);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    alert('로그아웃 되었습니다.');
+  // ① 입력창에 글을 쓰고 등록 버튼을 누르면 Firestore에 저장
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+
+    try {
+      await addDoc(collection(db, "opinions"), {
+        text: inputText,
+        createdAt: serverTimestamp() // ⑤ 최신순 정렬을 위한 서버 시간 기록
+      });
+      setInputText(''); // 입력창 초기화
+      fetchOpinions(); // 목록 새로고침
+    } catch (error) {
+      console.error("데이터 저장 중 오류가 발생했습니다: ", error);
+    }
   };
 
   return (
-    
-      {/* 1. 상단 헤더 (Header) */}
-      
-        
-          
-            ALLAM .
-          
-        
+    <div className="opinion-board-container">
+      {/* 의견 입력 폼 영역 */}
+      <form onSubmit={handleSubmit} className="opinion-form">
+        <textarea 
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="소중한 의견을 입력해주세요..."
+          required
+        />
+        <button type="submit">등록</button>
+      </form>
 
-        
-          {user ? (
-            
-              
-                💰 {userData.gold || 0} G
-              
-              
-                로그아웃
-              
-            
-          ) : (
-             setIsAuthOpen(true)} style={{
-              backgroundColor: '#7C3AED',
-              color: '#FFFFFF',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}>
-              로그인 / 회원가입
-            
-          )}
-        
-      
-
-      {/* 2. 본문 컨텐츠 메인 영역 */}
-      
-        {activeTab === 'home' && (
-          
-            {/* 다음 알람 카드 */}
-            
-              
-                다음 모닝콜 알람
-                
-                  🔥 5일 연속 성공
-                
-              
-              
-                07:00 AM
-              
-              
-                목표: "오전 7시에 일어나서 운동하기"
-              
-            
-
-            {/* 오늘의 미션 카드 */}
-            
-              🎯 오늘의 기상 미션
-              
-                
-                  7시 이전 기상하기
-                  [완료]
-                
-                
-                  AI 모닝콜 대화 듣기
-                  
-                    +50G 받기
-                  
-                
-              
-            
-          
+      {/* 의견 목록 영역 (최신순 출력) */}
+      <div className="opinion-list">
+        {opinions.length === 0 ? (
+          <p className="no-opinions">아직 등록된 의견이 없습니다.</p>
+        ) : (
+          opinions.map((item) => (
+            <div key={item.id} className="opinion-item">
+              <p className="opinion-text">{item.text}</p>
+              <span className="opinion-date">
+                {item.createdAt?.toDate 
+                  ? item.createdAt.toDate().toLocaleDateString() + ' ' + item.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : '방금 전'}
+              </span>
+            </div>
+          ))
         )}
-
-        {activeTab === 'alarm' && (
-          
-            ☀️ AI 모닝콜 설정
-            AI 페르소나가 나만의 기상 대사를 맞춤 생성해 드립니다.
-          
-        )}
-
-        {activeTab === 'community' && (
-          
-            👥 기상 커뮤니티
-            모닝러들과 기상 인증을 공유해 보세요!
-          
-        )}
-
-        {activeTab === 'shop' && (
-          
-            🛍️ 포인트 상점
-            모은 골드로 프로필 치장 아이템을 구매하세요.
-          
-        )}
-      
-
-      {/* 3. 하단 네비게이션 바 (Bottom Nav) */}
-      
-        {[
-          { id: 'home', label: '홈', icon: '🏠' },
-          { id: 'alarm', label: 'AI 모닝콜', icon: '☀️' },
-          { id: 'community', label: '커뮤니티', icon: '👥' },
-          { id: 'shop', label: '상점', icon: '🛍️' }
-        ].map((tab) => (
-           setActiveTab(tab.id)} style={{
-            background: 'none',
-            border: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px',
-            cursor: 'pointer',
-            color: activeTab === tab.id ? '#7C3AED' : '#94A3B8',
-            fontWeight: activeTab === tab.id ? 'bold' : 'normal'
-          }}>
-            {tab.icon}
-            {tab.label}
-          
-        ))}
-      
-
-      {/* 4. 로그인/회원가입 모달 팝업 */}
-       setIsAuthOpen(false)}
-        onLoginSuccess={(u) => alert(`${u.email}님, 환영합니다!`)}
-      />
-    
+      </div>
+    </div>
   );
 }
