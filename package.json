@@ -4,7 +4,12 @@
   "description": "ALLAM - AI Alarm & Community Platform",
   "main": "index.html",
   "scripts": {
-    "start": "serve ."
+    "start": "serve .",
+    "build": "echo 'No build step required'"
   },
-  "dependencies": {"firebase": "^10.12.0"}
+  "dependencies": {
+    "firebase": "^10.12.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
 }
